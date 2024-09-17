@@ -1,0 +1,119 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local userInputService = game:GetService("UserInputService")
+
+-- Tên các vườn hoa mà mày muốn farm.
+local gardenNames = {
+    "Dandelion Field",
+    "Sunflower Field",
+    "Mushroom Field",
+    "Blue Flower Field",
+    "Clover Field",
+    "Pine Tree Forest"
+}
+
+local farming = true
+local collectingTokens = true
+local autoDig = true
+
+print("Script bắt đầu hoạt động") -- Debugging
+
+-- Hàm di chuyển tới vườn hoa theo tên
+local function moveToGarden(gardenName)
+    for _, garden in pairs(game.Workspace.FlowerZones:GetChildren()) do
+        if garden.Name == gardenName then
+            print("Di chuyển tới: " .. gardenName) -- Debugging
+            hrp.CFrame = garden.CFrame
+            wait(0.5) -- Điều chỉnh thời gian delay nếu cần
+            break
+        end
+    end
+end
+
+-- Hàm nhặt token từ sức mạnh của ong
+local function collectPowerTokens()
+    if collectingTokens then
+        for _, token in pairs(game.Workspace.Collectibles:GetChildren()) do
+            if token.Name == "Honey Token" and token:FindFirstChildWhichIsA("Decal") then
+                print("Đang nhặt token sức mạnh: " .. token.Name) -- Debugging
+                hrp.CFrame = token.CFrame
+                wait(0.1)
+            end
+        end
+    end
+end
+
+-- Hàm farm cỏ trong vùng vườn hoa
+local function farmInGarden()
+    print("Bắt đầu farm vườn hoa") -- Debugging
+    for _, gardenName in ipairs(gardenNames) do
+        if not farming then break end
+        moveToGarden(gardenName)
+        local startTime = tick()
+        while (tick() - startTime) < 10 do -- Farm ở mỗi vườn hoa trong 10 giây. Điều chỉnh nếu cần.
+            if not farming then break end
+            collectPowerTokens() -- Nhặt token sức mạnh trong lúc farm
+            wait(0.1)
+        end
+    end
+end
+
+-- Hàm auto dig
+local function autoDig()
+    while true do
+if autoDig then
+            game:GetService("ReplicatedStorage").Events.PlayerActives:InvokeServer("Collect")
+        end
+        wait(0.1)
+    end
+end
+
+-- Hàm lặp lại hành động farm cỏ
+local function autoFarmGardens()
+    while true do
+        farmInGarden()
+        wait(1)
+    end
+end
+
+-- Chạy auto dig
+spawn(autoDig)
+
+-- Chạy auto farm
+spawn(autoFarmGardens)
+
+print("Script auto farm đã khởi động xong") -- Debugging
+
+-- Bảng điều khiển đơn giản
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Position = UDim2.new(0, 10, 0, 10)
+
+local farmingToggle = Instance.new("TextButton", frame)
+farmingToggle.Size = UDim2.new(1, 0, 0, 50)
+farmingToggle.Position = UDim2.new(0, 0, 0, 0)
+farmingToggle.Text = "Toggle Farming"
+farmingToggle.MouseButton1Click:Connect(function()
+    farming = not farming
+    farmingToggle.Text = farming and "Stop Farming" or "Start Farming"
+end)
+
+local collectingToggle = Instance.new("TextButton", frame)
+collectingToggle.Size = UDim2.new(1, 0, 0, 50)
+collectingToggle.Position = UDim2.new(0, 0, 0, 50)
+collectingToggle.Text = "Toggle Token Collecting"
+collectingToggle.MouseButton1Click:Connect(function()
+    collectingTokens = not collectingTokens
+    collectingToggle.Text = collectingTokens and "Stop Collecting" or "Start Collecting"
+end)
+
+local digToggle = Instance.new("TextButton", frame)
+digToggle.Size = UDim2.new(1, 0, 0, 50)
+digToggle.Position = UDim2.new(0, 0, 0, 100)
+digToggle.Text = "Toggle Auto Dig"
+digToggle.MouseButton1Click:Connect(function()
+    autoDig = not autoDig
+    digToggle.Text = autoDig and "Stop Auto Dig" or "Start Auto Dig"
+end)
